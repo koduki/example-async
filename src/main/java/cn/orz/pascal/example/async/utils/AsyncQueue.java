@@ -66,7 +66,9 @@ public class AsyncQueue<T> {
                     }
                 }
             }
-            this.completeCallback.run();
+            if (this.completeCallback != null) {
+                this.completeCallback.run();
+            }
             logger.fine("dequeue thread:close");
         }).start();
     }

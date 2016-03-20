@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  *
@@ -22,8 +25,15 @@ public class Test2 {
     static int dataSize = 1_000_000;
 
     public static void main(String[] args) throws Exception {
+        System.out.println("Parallelism:" + ForkJoinPool.commonPool().getParallelism() + ", core:" + +ForkJoinPool.commonPool().getParallelism());
         sequential();
-        async();
+        async(1);
+        async(2);
+        async(8);
+        async(16);
+        async(24);
+        async(48);
+        async(128);
     }
 
     public static String read(int index) {
@@ -52,7 +62,8 @@ public class Test2 {
         System.out.println("finish sequential:\t" + (e - s) / 1000 / 1000 + "\tms");
     }
 
-    public static void async() throws InterruptedException, ExecutionException {
+    public static void async(int parallel) throws InterruptedException, ExecutionException {
+        ExecutorService es = Executors.newFixedThreadPool(parallel);
         long s = System.nanoTime();
         AsyncQueue<String> asyncQueue = new AsyncQueue<>();
 
@@ -61,22 +72,23 @@ public class Test2 {
             int index = i;
             CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                 return read(index);
-            }).thenAcceptAsync((String x) -> {
+            }, es).thenAcceptAsync((String x) -> {
                 asyncQueue.push(new Task(index, parse(x)));
-            });
+            }, es);
             futures.add(future);
         }
 
         asyncQueue.startDequeue((x) -> write(x));
         asyncQueue.complete(() -> {
             long e = System.nanoTime();
-            System.out.println("finish sequential:\t" + (e - s) / 1000 / 1000 + "\tms");
+            System.out.println("finish async(" + parallel + "):\t" + (e - s) / 1000 / 1000 + "\tms");
         });
 
         // call all futures
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
         asyncQueue.pushEnd();
 
+        es.shutdown();
     }
 
 }
