@@ -8,6 +8,7 @@ package cn.orz.pascal.example.async;
 import cn.orz.pascal.example.async.utils.Task;
 import cn.orz.pascal.example.async.utils.AsyncQueue;
 import static cn.orz.pascal.example.async.utils.CommonUtils.*;
+import cn.orz.pascal.example.async.utils.SimpleBench;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -22,32 +23,41 @@ import java.util.concurrent.ForkJoinPool;
  */
 public class Test2 {
 
-    static int dataSize = 1_000_000;
+    static int dataSize = 5_000_000;
 
     public static void main(String[] args) throws Exception {
         System.out.println("Parallelism:" + ForkJoinPool.commonPool().getParallelism() + ", core:" + +ForkJoinPool.commonPool().getParallelism());
-        sequential();
-        async(1);
-        async(2);
+//        sequential();
+//        async(1);
+//        async(2);
         async(8);
-        async(16);
-        async(24);
-        async(48);
-        async(128);
+//        async(16);
+//        async(24);
+//        async(48);
+//        async(128);
     }
 
     public static String read(int index) {
+        SimpleBench.begin("read");
         nanoSleep(100);
+        SimpleBench.end("read");
+
         return index + ":success";
     }
 
     public static String parse(String msg) {
+        SimpleBench.begin("parse");
         nanoSleep(150_000);
         nanoSleep(140_000);
+        SimpleBench.end("parse");
+
         return msg + ":parsed";
     }
 
     public static void write(String msg) {
+        SimpleBench.begin("write");
+        SimpleBench.end("write");
+
 //        System.out.println(msg);
     }
 
